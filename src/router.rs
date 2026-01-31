@@ -16,8 +16,8 @@ pub async fn chat_handler(config: State<Config>) -> &'static str {
 pub fn router() -> Router {
     let config = Config::from_env().unwrap();
     Router::new()
-        .route("/chat", routing::post(chat_handler))
         .route_service("/", ServeFile::new("assets/index.html"))
+        .route("/chat", routing::post(chat_handler))
         .with_state(config)
 
 }
