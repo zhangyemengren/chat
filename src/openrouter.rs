@@ -1,16 +1,17 @@
 use std::io;
 use std::io::Write;
-use std::pin::Pin;
 use bytes::Bytes;
 use crate::config::Config;
 use serde_json::json;
-use futures_util::{StreamExt, stream, Stream};
+use futures_util::{StreamExt, stream::{self, BoxStream} };
 
+
+pub type ChatStream = BoxStream<'static, Result<Bytes, io::Error>>;
 
 pub async fn fetch_chat(
     cfg: &Config,
 ) -> Result<
-    Pin<Box<dyn Stream<Item = Result<Bytes, io::Error>> + Send + 'static>>,
+    ChatStream,
     Box<dyn std::error::Error>,
 > {
     let client = reqwest::Client::new();
@@ -38,10 +39,7 @@ pub async fn fetch_chat(
         .send()
         .await?.bytes_stream();
     let mut buf: Vec<u8> = Vec::new();
-    let out_stream = stream::unfold((res, buf, false), |(mut res, mut buf, done)| async move {
-        if done {
-            return None;
-        }
+    let out_stream = stream::unfold((res, buf), |(mut res, mut buf)| async move {
         match res.next().await {
             Some(Ok(chunk)) => {
                 // 打印
@@ -52,11 +50,11 @@ pub async fn fetch_chat(
                     print!("{}", line);
                     let _ = io::stdout().flush();
                 }
-                Some((Ok(chunk), (res, buf, false)))
+                Some((Ok(chunk), (res, buf)))
             }
             Some(Err(err)) => {
                 let io_err = io::Error::new(io::ErrorKind::Other, err);
-                Some((Err(io_err), (res, buf, true)))
+                Some((Err(io_err), (res, buf)))
             }
             None => None,
         }
