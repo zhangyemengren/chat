@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <input type="text">
+    <button id="send-button">Send</button>
+    <div id="chat">
+
+    </div>
+</body>
+<script>
+    const btn = document.getElementById("send-button");
+    btn.addEventListener("click", async () => {
+        const input = document.querySelector("input");
+        const message = input.value;
+        console.log(message);
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message }),
+        });
+        const data = await res.text();
+        console.log(data);
+        const chat = document.getElementById("chat");
+        chat.innerHTML += `<div>${data.message}</div>`;
+    });
+</script>
+</html>

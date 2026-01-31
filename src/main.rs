@@ -1,12 +1,13 @@
 mod config;
-mod fetch;
+mod openrouter;
+mod router;
 
-use config::Config;
-use fetch::fetch_chat;
+use router::router;
 
 #[tokio::main]
 async fn main() {
-    let cfg = Config::from_env().unwrap();
-    println!("Loaded config: api_key length = {}", cfg.api_key.len());
-    fetch_chat(&cfg).await.unwrap();
+    
+    // fetch_chat(&cfg).await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, router()).await.unwrap();
 }

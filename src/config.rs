@@ -51,7 +51,7 @@ fn get_env(key: &str, dotenv: &HashMap<String, String>) -> Option<String> {
     env::var(key).ok().or_else(|| dotenv.get(key).cloned())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub api_key: String,
 }
