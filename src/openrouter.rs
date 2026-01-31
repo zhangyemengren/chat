@@ -31,14 +31,14 @@ pub async fn fetch_chat(
         "stream": true
     });
 
-    let mut res = client
+    let res = client
         .post(url)
         .header("Authorization", format!("Bearer {}", api_key))
         .header("Content-Type", "application/json")
         .json(&body)
         .send()
         .await?.bytes_stream();
-    let mut buf: Vec<u8> = Vec::new();
+    let buf: Vec<u8> = Vec::new();
     let out_stream = stream::unfold((res, buf), |(mut res, mut buf)| async move {
         match res.next().await {
             Some(Ok(chunk)) => {
