@@ -13,21 +13,19 @@
 </body>
 <script>
     const btn = document.getElementById("send-button");
+    function handleChatMessage() {
+        const evtSource = new EventSource("/chat");
+        evtSource.onmessage = (e) => {
+            const chat = document.getElementById("chat");
+            chat.innerHTML += `<div>${e.data}</div>`;
+            if (e.data === "[DONE]") {
+                evtSource.close();
+            }
+        };
+    }
+
     btn.addEventListener("click", async () => {
-        const input = document.querySelector("input");
-        const message = input.value;
-        console.log(message);
-        const res = await fetch("/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ message }),
-        });
-        const data = await res.text();
-        console.log(data);
-        const chat = document.getElementById("chat");
-        chat.innerHTML += `<div>${data.message}</div>`;
+        handleChatMessage();
     });
 </script>
 </html>
