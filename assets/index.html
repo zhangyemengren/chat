@@ -5,7 +5,8 @@
     <title>Title</title>
 </head>
 <body>
-    <input type="text">
+    <textarea id="input-content"></textarea>
+    <br>
     <button id="send-button">Send</button>
     <div id="chat">
 
@@ -13,15 +14,44 @@
 </body>
 <script>
     const btn = document.getElementById("send-button");
-    function handleChatMessage() {
-        const evtSource = new EventSource("/chat");
-        evtSource.onmessage = (e) => {
-            const chat = document.getElementById("chat");
-            chat.innerHTML += `<div>${e.data}</div>`;
-            if (e.data === "[DONE]") {
-                evtSource.close();
+    const input = document.getElementById("input-content");
+    const chatDiv = document.getElementById("chat");
+    async function fetchChat() {
+        return await fetch("/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/event-stream",
+            },
+            body: JSON.stringify({content: input.value}),
+        });
+    }
+    async function handleChatMessage() {
+        const res = await fetchChat();
+        const body = res.body;
+        const reader = await body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) {
+                await reader.cancel();
+                break;
             }
-        };
+            const text = decoder.decode(value, {stream: true});
+            const lines = text.split("\n");
+            for (const line of lines) {
+                const json = line.trim().replace(/^data:/, "");
+                if (!json) {
+                    continue;
+                }
+                const choices = JSON.parse(json).choices;
+                const content = choices[0].delta.content;
+
+                const span = document.createElement("span");
+                span.textContent = content;
+                chatDiv.appendChild(span);
+            }
+        }
     }
 
     btn.addEventListener("click", async () => {

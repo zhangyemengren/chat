@@ -7,14 +7,21 @@ use futures_util::{StreamExt, stream::{self, BoxStream} };
 
 pub type SseStream = BoxStream<'static, Result<Event, Infallible>>;
 
+
+#[derive(serde::Deserialize)]
+pub struct ChatRequest {
+    pub content: String,
+}
+
 pub async fn fetch_chat_sse(
     cfg: &Config,
+    req: ChatRequest,
 ) -> Result<
     SseStream,
     Box<dyn std::error::Error>,
 > {
     let client = reqwest::Client::new();
-
+    let content = req.content;
     let api_key = &cfg.api_key;
     let url = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -23,7 +30,7 @@ pub async fn fetch_chat_sse(
         "messages": [
             {
                 "role": "user",
-                "content": "How many r's are in the word 'strawberry'?"
+                "content": content
             }
         ],
         "reasoning": {"enabled": true},
@@ -70,6 +77,7 @@ pub async fn fetch_chat_sse(
                         if data.is_empty() {
                             continue;
                         }
+                        println!("{}", data);
                         queue.push_back(Event::default().data(data.to_string()));
                     }
                 }

@@ -162,6 +162,7 @@ dependencies = [
  "bytes",
  "futures-util",
  "reqwest",
+ "serde",
  "serde_json",
  "tokio",
  "tower-http",
